@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------
+// Enums
+// ---------------------------
+enum UserRole {
+  user
+  admin
+  superAdmin
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum SubscriptionType {
+  Free
+  Premium
+  Pro
+}
+
+enum ConversationType {
+  ONE_TO_ONE
+  PROJECT
+  GROUP
+  BOND_LINK
+  INSTITUTION
+}
+
+// ---------------------------
+// User
+// ---------------------------
+model User {
+  id                String    @id @default(uuid())
+  profileId         String?
+  email             String    @unique
+  password          String
+  passwordChangedAt DateTime?
+  role              UserRole  @default(user)
+  isBlocked         Boolean   @default(false)
+  isActive          Boolean   @default(true)
+  verifyCode        Int?
+  resetCode         Int?
+  isVerified        Boolean   @default(false)
+  isResetVerified   Boolean   @default(false)
+  codeExpireIn      DateTime?
+  appleId           String?
+  googleId          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  normalUser NormalUser?
+  superAdmin SuperAdmin?
+  admin      Admin?
+}
+
+// ---------------------------
+// Normal User
+// ---------------------------
+model NormalUser {
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  name         String
+  email        String    @unique
+  phone        String?
+  profileImage String?
+  gender       Gender?
+  dateOfBirth  DateTime?
+  address      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+}
+
+// ---------------------------
+// Super Admin
+// ---------------------------
+model SuperAdmin {
+  id           String  @id @default(uuid())
+  userId       String  @unique
+  name         String
+  email        String  @unique
+  phone        String?
+  profileImage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------
+// Admin
+// ---------------------------
+model Admin {
+  id           String  @id @default(uuid())
+  userId       String  @unique
+  name         String
+  email        String  @unique
+  phone        String?
+  profileImage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------
+// Message
+// ---------------------------
+model Message {
+  id             String   @id @default(uuid())
+  text           String
+  imageUrl       String[]
+  msgByUserId    String
+  conversationId String
+  seen           Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  sender       NormalUser   @relation(fields: [msgByUserId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation("ConversationMessages", fields: [conversationId], references: [id], onDelete: Cascade)
+
+  lastMessageInConversation Conversation[] @relation("LastMessage")
+}
+
+// ---------------------------
+// Conversation
+// ---------------------------
+model Conversation {
+  id String @id @default(uuid())
+
+  participants String[]
+
+  lastMessageId String?
+  lastMessage   Message? @relation("LastMessage", fields: [lastMessageId], references: [id])
+
+  type ConversationType @default(ONE_TO_ONE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages Message[] @relation("ConversationMessages")
+}
