@@ -1,10 +1,10 @@
 - # Prima Mongodb Template
-- Make a prima mongodb tamplate for developers
+- Make a prima PostgreSQL tamplate for developers
 
 - ## Technology used
 - Typescript
 - ExpressJS
-- Mongodb
+- PostgreSQL
 - Prisma
 
 - ### Instructions for run this file locally
